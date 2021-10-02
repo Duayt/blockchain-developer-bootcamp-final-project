@@ -28,6 +28,7 @@ A smart contract service to help discipline and force you to be a hodler!. the c
 4. Token position could not be sold to within certain period of time or if the green candle is not hug enough
 
 ## **TODO**
+- [ ] Setup project
 - [ ] DEX interface eg. UNISWAP, SUSHISWAP
   - [ ] Buy function
   - [ ] Sell function
