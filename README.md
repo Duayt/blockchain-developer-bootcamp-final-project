@@ -2,6 +2,10 @@
 
 # **Hodler Service**
 Goal: One day this contract will make someone a crypto millionaires in the long run....
+<p float="center">
+<img src="https://user-images.githubusercontent.com/28585719/135728318-f0c39a20-7720-4948-b52e-8ef7c7011ad2.png" height="200" />
+<img src="https://user-images.githubusercontent.com/28585719/135728337-0f91cfd2-4ab0-4b2f-838d-6be9cee72d8d.png" height="200" />
+</p>
 
 ## **Problem**
 Crypto market is volatile with high intensity of fear vs greed. I think it is hard sometime to be a real Hodler - [Hold on for deal life]( https://www.investopedia.com/terms/h/hodl.asp) when there is a big crashes in the market, however those day are likely to provide the highest gain if you buy the dip. 
