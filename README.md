@@ -4,7 +4,7 @@
 Goal: One day this contract will make someone a crypto millionaires in the long run....
 
 ## **Problem**
-Crypto market is volatile with high intensity of fear vs greed. I think it is hard sometime to be a real hodler (hold on for deal life) when there is a big crashes in the market, however those day are likely to provide the highest gain if you buy the dip. 
+Crypto market is volatile with high intensity of fear vs greed. I think it is hard sometime to be a real Hodler - [Hold on for deal life]( https://www.investopedia.com/terms/h/hodl.asp) when there is a big crashes in the market, however those day are likely to provide the highest gain if you buy the dip. 
 
 ## **Solution**
 A smart contract service to help discipline and force you to be a hodler!. the contract will be connected to an existing dex but with hodling oriented features:
