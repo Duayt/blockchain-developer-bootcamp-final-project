@@ -24,10 +24,11 @@ A smart contract service to help discipline and force you to be a hodler!. the c
 ## **Example workflow**
 1. User could deposit stable coin to a contract but might not able to withdraw out within a specific period
 2. The contract could may be call to check daily gains (red or green candles)
-3. Those stable coin could only be used to buy specific token from a DEX only it is a certain dip!
-4. Token position could not be sold to within certain period of time or if the green candle is not hug enough
+3. Those stable coin could only be used to buy specific token from a DEX only in  a certain dip!
+4. Token position could not be sold to within certain period of time or if the green candle is not huge enough
 
 ## **TODO**
+- [x] Setup project
 - [ ] DEX interface eg. UNISWAP, SUSHISWAP
   - [ ] Buy function
   - [ ] Sell function
