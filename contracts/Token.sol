@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
-
+// Default mock token
 // Solidity files have to start with this pragma.
 // It will be used by the Solidity compiler to validate its version.
 pragma solidity ^0.8.4;
@@ -49,12 +49,12 @@ contract Token {
         require(balances[msg.sender] >= amount, "Not enough tokens");
 
         // We can print messages and values using console.log
-        console.log(
-            "Transferring from %s to %s %s tokens",
-            msg.sender,
-            to,
-            amount
-        );
+        // console.log(
+        //     "Transferring from %s to %s %s tokens",
+        //     msg.sender,
+        //     to,
+        //     amount
+        // );
 
         // Transfer the amount.
         balances[msg.sender] -= amount;
