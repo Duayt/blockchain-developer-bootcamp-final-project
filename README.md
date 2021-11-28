@@ -78,9 +78,12 @@ To test the Dex , i have deployed a mocked token on Kovan with step below
 * May be a customizable input for different tokens or scenario like, 1 year hodling etc.
 * Chaotic ape trading - Buy random token just for fun!
 
+# **Public Ethereum wallet for certification:
+`0x6D9469aD7BdFc6BFb0638b8DD31D4C814726Ed43`
 # **Resouces**
 
 * https://soliditydeveloper.com/uniswap3
 * https://docs.uniswap.org/protocol/guides/swaps/single-swaps
 * https://jamesbachini.com/uniswap-v3-trading-bot/
 * https://docs.uniswap.org/sdk/guides/creating-a-trade
+  
