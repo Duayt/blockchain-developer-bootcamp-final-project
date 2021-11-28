@@ -20,9 +20,9 @@ address public owner;
 
 /// @notice  This is mocked token deployed on kovan network
 /// @dev Can change this when deploy to other specific token eg. WBTC on main net 
-// IERC20 public targetToken =IERC20(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
+IERC20 public targetToken =IERC20(0xf09F34Ade2D66EA69372C828454873bFa9c04556);
 
-address private constant targetToken = 0xf09F34Ade2D66EA69372C828454873bFa9c04556;
+// address private constant targetToken = 0xf09F34Ade2D66EA69372C828454873bFa9c04556;
 
 /// @dev a Wrap ETH on Kovan network,
 address private constant WETH9 = 0xd0A1E359811322d97991E03f863a0C30C2cF029C;
@@ -53,8 +53,13 @@ struct HodlerInfo {
 event LogDepositMade(address accountAddress, uint256 amount, uint256 nextUnlock);
 
 // log withdraw
-event LogWithdrawal(address accountAddress, uint256 amount);
+event LogWithdrawalEth(address accountAddress, uint256 amount);
+
 // log buy
+event LogBuy(address accountAddress, uint256 amountIn,uint256 amountOut);
+
+// log withdraw
+event LogWithdrawalToken(address accountAddress, uint256 amount);
 
 /* 
  * Modifiers
@@ -103,7 +108,7 @@ function withdraw() public canWithdraw(){
     uint256 _amount=info.balance;
     info.balance = 0;
     payable(msg.sender).transfer(_amount);
-    emit LogWithdrawal(msg.sender,_amount);
+    emit LogWithdrawalEth(msg.sender,_amount);
 }
 function buy(uint256 _amount)  external  returns(uint256 ) {
     HodlerInfo storage info = hodlerInfo[msg.sender];
@@ -113,7 +118,7 @@ function buy(uint256 _amount)  external  returns(uint256 ) {
     info.balance -=_amount;
     uint256 deadline = block.timestamp + 15;  /// @dev using 'now' for convenience, for mainnet pass deadline from frontend!
     address tokenIn = WETH9;
-    address tokenOut = targetToken;
+    address tokenOut = address(targetToken);
     uint24 fee = 500;
     address recipient = address(this);
     uint256 amountIn = _amount;
@@ -131,25 +136,20 @@ function buy(uint256 _amount)  external  returns(uint256 ) {
         sqrtPriceLimitX96
     );
 
-    uint256 amountOut= uniswapRouter.exactInputSingle{value: amountIn}(params);
-    // uniswapRouter.refundETH();
+    uint256 _amountout= uniswapRouter.exactInputSingle{value: amountIn}(params);
+    info.tokenBalance +=_amountout;
 
-    // refund leftover ETH to user
-    // (bool success,) = msg.sender.call{ value: address(this).balance }("");
-    // require(success, "refund failed");
- 
-    return amountOut;
+    emit LogBuy(msg.sender,amountIn,_amountout);
+    return _amountout;
   }
     
 
-
-
-
-function withdrawToken(uint256 _targetAmount) view public {
-    // withdraw the target tokens
-    console.log("Hodler:===== withdrawTarget() ====");
-    console.log("arg: ",_targetAmount);
-
+function withdrawToken() public canWithdraw(){
+    // console.log("Hodler:===== withdraw() ====");
+    HodlerInfo storage info = hodlerInfo[msg.sender];
+    uint256 _amount=info.tokenBalance;
+    info.tokenBalance = 0;
+    targetToken.transfer(msg.sender,_amount);
+    emit LogWithdrawalToken(msg.sender,_amount);
 }
-
 }
