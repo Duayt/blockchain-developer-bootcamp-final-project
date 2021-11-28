@@ -20,6 +20,11 @@ address public owner;
 // // target token (WBTC on ETH)
 // IERC20 public targetToken =IERC20(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
 
+// Kovan
+// // stable coin token address (USDT on ETH)
+// IERC20 public  dai =IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+// // target token (WBTC on ETH)
+// IERC20 public targetToken =IERC20(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
 
 
 address private constant WETH9 = 0xd0A1E359811322d97991E03f863a0C30C2cF029C;
@@ -27,8 +32,8 @@ address private constant WETH9 = 0xd0A1E359811322d97991E03f863a0C30C2cF029C;
 //Uniswap V3 router
  IUniswapRouter public constant uniswapRouter = IUniswapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
-//<User USD Balance>
-mapping(address=> uint256) public usdBalance;
+//<User Eth Balance>
+mapping(address=> uint256) public Balance;
 
 //<User target token Balance>
 mapping(address=> uint256) public tokenBalance;

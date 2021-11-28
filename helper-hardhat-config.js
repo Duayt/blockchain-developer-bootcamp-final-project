@@ -34,6 +34,7 @@ const networkConfig = {
     fundAmount: "1000000000000000000",
     url: `https://speedy-nodes-nyc.moralis.io/${MORALIS_API}/eth/kovan`,
     forkUrl: `https://speedy-nodes-nyc.moralis.io/${MORALIS_API}/eth/kovan/archive`,
+    forkBlockNumber: 28577500, // mocked token was listed @28577077
   },
   4: {
     name: "rinkeby",
@@ -80,6 +81,21 @@ const networkConfig = {
 
 const developmentChains = ["hardhat", "localhost"];
 
+const tokens = {
+  KOVAN: {
+    DAI: "0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa",
+    ETH: "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
+    MOCK: "0xf09F34Ade2D66EA69372C828454873bFa9c04556",
+  },
+  MAINNET: {
+    DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+    ETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  },
+};
 module.exports = Object.freeze({
   NETWORK_CONFIG: networkConfig,
+  UNISWAPV3_ROUTER: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+  UNISWAPV3_QUOTER: "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6",
+  TOKENS: tokens,
 });
