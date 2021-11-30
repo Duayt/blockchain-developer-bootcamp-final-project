@@ -9,8 +9,7 @@ import "bootstrap/dist/css/bootstrap.css";
 // react component. All of the logic is contained in it.
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Dapp />
-  </React.StrictMode>,
+  // <React.StrictMode>
+    <Dapp />,
   document.getElementById("root")
 );
