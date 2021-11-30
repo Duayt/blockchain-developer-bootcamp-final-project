@@ -46,7 +46,7 @@ if (HARDHAT_NETWORK_ID === "1337") {
   // KOVAN TEST NET
   contractAddress = {
     MockToken: "0xf09f34ade2d66ea69372c828454873bfa9c04556",
-    Hodler: "0xFABB293906e837087367c26134ec5ebC505a37c1",
+    Hodler: "0x745fcF84c830734BD80b8C21F6eF22736a07BA89",
   };
 }
 
