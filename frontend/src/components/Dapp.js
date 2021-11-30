@@ -23,7 +23,7 @@ import { Buy } from "./Buy";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { SuccessTransactionMessage } from "./SuccessTransactionMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
-import { NoTokensMessage } from "./NoTokensMessage";
+// import { NoTokensMessage } from "./NoTokensMessage";
 import { formatEther, parseEther } from "ethers/lib/utils";
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
