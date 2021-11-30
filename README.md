@@ -51,9 +51,10 @@ REACT_APP_CHAINID=42
 ## **Contract**
 - Run npm install in project root to install all dependency
 - Update moralis api in the .env with API key
-- Run testnet forking with `npx hardhat fork` (Forking the DEX with liquidity)
-- Run test with `npx hardhat test`
-- Run local deployment with `npx hardhat deploy --tags main --network localhost`
+- Run testnet forking with `npm run node` (Forking the DEX with liquidity)
+- To compile run `npm run compile`
+- Run test with `npm run test`
+- Run local deployment with `npm run deploy-contract`
 - Development network id is 31337 change it in metamask
 
 ## **Frontend**

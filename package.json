@@ -6,7 +6,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "node": "hardhat fork",
+    "compile":"hardhat compile",
+    "deploy-contract":"hardhat deploy --tags hodler --network localhost"
   },
   "repository": {
     "type": "git",
