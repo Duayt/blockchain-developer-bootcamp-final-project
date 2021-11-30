@@ -206,82 +206,64 @@ export class Dapp extends React.Component {
 
         <div className="row">
           <div className="col-12">
-            {/*
-              If the user has no tokens, we don't show the Tranfer form
-            */}
-            {this.state.tokenBalance.eq(0) && (
-              <NoTokensMessage selectedAddress={this.state.selectedAddress} />
-            )}
+            <div>
+              {/* showing info */}
+              <h4>Hodler Info</h4>
+              <p>
+                Deposited balance:{" "}
+                {formatEtherFixed(this.state.hodlerInfo.balance, 2)}
+                <br />
+                Target token balance:{" "}
+                {formatEtherFixed(this.state.hodlerInfo.tokenBalance, 2)}
+                <br />
+                Last deposited:{" "}
+                {this.state.hodlerInfo.lastDeposit.toString() === "0"
+                  ? "Have not deposited yet"
+                  : this.state.hodlerInfo.lastDeposit.toString()}
+                <br />
+                Wen Withdraw?:{" "}
+                {this.state.hodlerInfo.nextUnlock.toString() === "0"
+                  ? "Have not deposited yet"
+                  : this.state.hodlerInfo.nextUnlock.toString()}
+                <br />
+                Now: {this.state.timestamp}
+              </p>
 
-            {/*
-              This component displays a form that the user can use to send a 
-              transaction and transfer some tokens.
-              The component doesn't have logic, it just calls the transferTokens
-              callback.
-            */}
-            {this.state.tokenBalance.gt(0) && (
-              <div>
-                {/* showing info */}
-                <h4>Hodler Info</h4>
-                <p>
-                  Deposited balance:{" "}
-                  {formatEtherFixed(this.state.hodlerInfo.balance, 2)}
-                  <br />
-                  Target token balance:{" "}
-                  {formatEtherFixed(this.state.hodlerInfo.tokenBalance, 2)}
-                  <br />
-                  Last deposited:{" "}
-                  {this.state.hodlerInfo.lastDeposit.toString() === "0"
-                    ? "Have not deposited yet"
-                    : this.state.hodlerInfo.lastDeposit.toString()}
-                  <br />
-                  Wen Withdraw?:{" "}
-                  {this.state.hodlerInfo.nextUnlock.toString() === "0"
-                    ? "Have not deposited yet"
-                    : this.state.hodlerInfo.nextUnlock.toString()}
-                  <br />
-                  Now: {this.state.timestamp}
-                </p>
-
-                <hr></hr>
-                <div
-                  style={{ display: "flex", justifyContent: "space-evenly" }}
-                >
-                  <Deposit
-                    deposit={(to, locktime) => this._deposit(to, locktime)}
+              <hr></hr>
+              <div style={{ display: "flex", justifyContent: "space-evenly" }}>
+                <Deposit
+                  deposit={(to, locktime) => this._deposit(to, locktime)}
+                />
+                <Buy buy={(amount) => this._buy(amount)} />
+                <div>
+                  <Withdraw
+                    buttonMessage={"Withdraw Eth"}
+                    withdraw={() => this._withdrawEth()}
+                    disabled={this.state.isLocked}
                   />
-                  <Buy buy={(amount) => this._buy(amount)} />
-                  <div>
-                    <Withdraw
-                      buttonMessage={"Withdraw Eth"}
-                      withdraw={() => this._withdrawEth()}
-                      disabled={this.state.isLocked}
-                    />
-                    <br></br>
-                    <Withdraw
-                      buttonMessage={"Withdraw " + this.state.tokenData.symbol}
-                      withdraw={() => this._withdrawToken()}
-                      disabled={this.state.isLocked}
-                    />
-                  </div>
+                  <br></br>
+                  <Withdraw
+                    buttonMessage={"Withdraw " + this.state.tokenData.symbol}
+                    withdraw={() => this._withdrawToken()}
+                    disabled={this.state.isLocked}
+                  />
                 </div>
-                <hr></hr>
-                <p>
-                  This project is for
-                  blockchain-developer-bootcamp-final-project
-                  {"   "}
-                  <a href="https://github.com/Duayt/blockchain-developer-bootcamp-final-project">
-                    Github
-                  </a>
-                </p>
-                <span>
-                  Author:{" "}
-                  <a href="https://www.linkedin.com/in/tanawat-chiewhawan/">
-                    Tanawat Chiewhawan
-                  </a>
-                </span>
               </div>
-            )}
+              <hr></hr>
+              <p>
+                This project is for blockchain-developer-bootcamp-final-project
+                {"   "}
+                <a href="https://github.com/Duayt/blockchain-developer-bootcamp-final-project">
+                  Github
+                </a>
+              </p>
+              <span>
+                Author:{" "}
+                <a href="https://www.linkedin.com/in/tanawat-chiewhawan/">
+                  Tanawat Chiewhawan
+                </a>
+              </span>
+            </div>
           </div>
         </div>
       </div>

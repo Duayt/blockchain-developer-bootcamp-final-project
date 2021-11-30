@@ -1,5 +1,9 @@
 # blockchain-developer-bootcamp-final-project
 
+# **Deployed version url:**
+
+https://moralis.io/
+
 # **Hodler Service**
 Goal: One day this contract will make someone a crypto millionaires in the long run....
 <p float="center">
@@ -24,30 +28,26 @@ A smart contract service to help discipline and force you to be a hodler!. the c
 
 Future: The contract could may be call to check daily gains (red or green candles)  move price check to frontend instead, criteria check within buy seem costly 
 
-# **Environment variables**
+# **Environment variables (Required Moralis API to locally fork TESTNET)**
 API for archival node fork from [Moralis](https://moralis.io/)
 ```
 MORALIS_API=
 MNEMONIC=
+```
+
+frontend/.env config chainid=42 for kovan testnet
+```
+REACT_APP_CHAINID=42
 ```
 # **How to run this project locally:**
 ## **Prerequisites**
 - Node.js >= v14
 - Hardhat (plugin: hardhat-deploy, hardhat-etherscan)
 - npm
+- Moralis API in .env to locally fork kovan testnet =>[Moralis](https://moralis.io/)
 - `git checkout main`
 
-## **Mocking Environment**
-To test the Dex , i have deployed a mocked token on Kovan with step below
-- MockToken was deployed on kovan with `npx hardhat deploy --tags token --network kovan`
-- Token address `0xf09F34Ade2D66EA69372C828454873bFa9c04556`
-- Token was verified with command:`npx hardhat verify --network kovan 0xf09F34Ade2D66EA69372C828454873bFa9c04556`
-- Manually minted: 1,000,000 tokens
-- Pool created with 0.48 ETH: 1,000,000 tokens
-  - [Uniswap Web](https://app.uniswap.org/#/add/ETH/0xf09F34Ade2D66EA69372C828454873bFa9c04556/500)
-  - [Liqudiity Transaction](https://kovan.etherscan.io/tx/0xc29e5ad0c1f3475a358477853050e5ebd33b69fba370f75c1fc59df66f0121cc)
-  - [Pool Address](https://kovan.etherscan.io/address/0x0b3977134f3343565f569aa6d37bbb9e4680ae6f)
-  - Block: 28577077, forked block for local dev 28577078
+
 ## **Contract**
 - Run npm install in project root to install all dependency
 - Update moralis api in the .env with API key
@@ -61,16 +61,30 @@ To test the Dex , i have deployed a mocked token on Kovan with step below
 - `npm install`
 - `npm start`
 - Open `http:/localhost:3000`
-    
+- metamask might show error, fix: Metamask>setting>advance>reset account
+## **Directory Structure**
+- `frontend`: Project React app frontend
+- `contracts`: Smart contract that are deployed on Kovan test net
+- `deploy`: deployment scripts for hardhat-deploy plugin
+- `task`: A script to aid during development
+- `test`: Tests for smartcontracts
 
-# **TODO**
-- [x] Setup project
-- [ ] DEX interface eg. UNISWAP, SUSHISWAP
-  - [ ] Buy function
-  - [ ] Sell function
-- [ ] Timelock
-- [ ] App
+## **Mocking Environment**
+To test the Dex , i have deployed a mocked token on Kovan with step below
+- MockToken was deployed on kovan with `npx hardhat deploy --tags token --network kovan`
+- Token address `0xf09F34Ade2D66EA69372C828454873bFa9c04556`
+- Token was verified with command:`npx hardhat verify --network kovan 0xf09F34Ade2D66EA69372C828454873bFa9c04556`
+- Manually minted: 1,000,000 tokens
+- Pool created with 0.48 ETH: 1,000,000 tokens
+  - [Uniswap Web](https://app.uniswap.org/#/add/ETH/0xf09F34Ade2D66EA69372C828454873bFa9c04556/500)
+  - [Liqudiity Transaction](https://kovan.etherscan.io/tx/0xc29e5ad0c1f3475a358477853050e5ebd33b69fba370f75c1fc59df66f0121cc)
+  - [Pool Address](https://kovan.etherscan.io/address/0x0b3977134f3343565f569aa6d37bbb9e4680ae6f)
+  - Block: 28577077, forked block for local dev 28577078
 
+# **Screencast link**
+asfasfdaf
+# **Public Ethereum wallet for certification:**
+`0x6D9469aD7BdFc6BFb0638b8DD31D4C814726Ed43`
 ## **More idea** 
 * Price reading data in the future.
 * Auto Dollar-Cost Averaging , keep buying weekly or monthly or at dip
@@ -78,8 +92,6 @@ To test the Dex , i have deployed a mocked token on Kovan with step below
 * May be a customizable input for different tokens or scenario like, 1 year hodling etc.
 * Chaotic ape trading - Buy random token just for fun!
 
-# **Public Ethereum wallet for certification:
-`0x6D9469aD7BdFc6BFb0638b8DD31D4C814726Ed43`
 # **Resouces**
 
 * https://soliditydeveloper.com/uniswap3
