@@ -2,6 +2,7 @@
 pragma solidity 0.8.4;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import '@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IUniswapRouter is ISwapRouter {
     function refundETH() external payable;
@@ -11,11 +12,9 @@ interface IUniswapRouter is ISwapRouter {
 /// @author Tanawat C.
 /// @notice Allow user to deposit eth, locked for long term and used to buy target token
 /// @dev Token address were fixed with MockedToken deployed on Kovan testnet
-contract Hodler {
+contract Hodler is Ownable {
  using SafeERC20 for IERC20;
 
-
-address public owner;
 
 /// @notice  This is mocked token deployed on kovan network
 /// @dev Can change this when deploy to other specific token eg. WBTC on main net 
@@ -53,6 +52,7 @@ struct HodlerInfo {
 event LogDepositMade(address indexed accountAddress, uint256 amount, uint256 nextUnlock);
 
 ///@notice Emitted when user made eth withdrawal
+///@param accountAddress user address who made the withdrawal 
 ///@param amount amount of ETH user have withdrawn
 event LogWithdrawalEth(address indexed accountAddress, uint256 amount);
 
@@ -63,8 +63,14 @@ event LogWithdrawalEth(address indexed accountAddress, uint256 amount);
 event LogBuy(address indexed accountAddress, uint256 amountIn,uint256 amountOut);
 
 ///@notice Emitted when user made token withdrawal
+///@param accountAddress user address who made the withdrawal 
 ///@param amount amount of token user have withdrawn
 event LogWithdrawalToken(address indexed accountAddress, uint256 amount);
+
+///@notice Emitted when owner change token
+///@param accountAddress user address who made the tokenChange 
+///@param newToken new token that was will be set.
+event LogChangeToken(address indexed accountAddress, IERC20 newToken);
 
 /* 
  * Modifiers
@@ -89,11 +95,6 @@ modifier checkMaxTimelock(uint256 _lockSecond) {
     _;
   }
 
-
-
-constructor(){
-    owner = msg.sender;    
-}
 
 ///@notice Deposit ETH into the contract and specify timelock for ETH and target token
 ///@param _lockSeconds number of second to locked the ETH and tokens, starting from the deposited block timestamp
@@ -165,4 +166,12 @@ function withdrawToken() public canWithdraw(){
     targetToken.transfer(msg.sender,_amount);
     emit LogWithdrawalToken(msg.sender,_amount);
 }
+
+///@notice only Owner could change the token addresss
+///@param _token new token to change
+function setTargetToken(IERC20 _token) onlyOwner public {
+    targetToken = _token;
+    emit LogChangeToken(msg.sender, _token);
+}
+//TODO write test
 }

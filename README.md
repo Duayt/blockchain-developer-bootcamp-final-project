@@ -2,7 +2,7 @@
 
 # **Deployed version url:**
 
-https://moralis.io/
+https://frosty-lovelace-f800b7.netlify.app/
 
 # **Hodler Service**
 Goal: One day this contract will make someone a crypto millionaires in the long run....
