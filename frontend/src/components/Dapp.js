@@ -5,8 +5,11 @@ import { ethers } from "ethers";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
-import TokenArtifact from "../contracts/Token.json";
-import contractAddress from "../contracts/contract-address.json";
+import TokenArtifact from "../contracts/MockToken.json";
+import ContractArtifact from "../contracts/Hodler.json";
+
+import kovanContractAddress from "../contracts/kovan-addresses.json";
+import localContractAddress from "../contracts/local-addresses.json";
 
 // All the logic of this dapp is contained in the Dapp component.
 // These other components are just presentational ones: they don't have any
@@ -14,19 +17,32 @@ import contractAddress from "../contracts/contract-address.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { Transfer } from "./Transfer";
+// import { Transfer } from "./Transfer";
+import { Hodler } from "./Hodler";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
-
+import { formatEther, formatUnit } from "ethers/lib/utils";
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
-const HARDHAT_NETWORK_ID = '31337';
-
+// const HARDHAT_NETWORK_ID = '31337';
+const HARDHAT_NETWORK_ID = "1337";
+let contractAddress;
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
+if (HARDHAT_NETWORK_ID === "1337") {
+  contractAddress = localContractAddress;
+} else {
+  contractAddress = kovanContractAddress;
+}
+
+function formatEtherFixed(balance, decimals) {
+  let res = formatEther(balance);
+  res = (+res).toFixed(decimals);
+  return res;
+}
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
 //   2. Initializes ethers and the Token contract
@@ -48,7 +64,12 @@ export class Dapp extends React.Component {
       tokenData: undefined,
       // The user's address and balance
       selectedAddress: undefined,
-      balance: undefined,
+      tokenBalance: undefined,
+      ethBalance: undefined,
+
+      // The Hodler contract data
+      hodlerData: undefined,
+      hodlerInfo: undefined,
       // The ID about transactions being sent, and any possible error with them
       txBeingSent: undefined,
       transactionError: undefined,
@@ -74,8 +95,8 @@ export class Dapp extends React.Component {
     // clicks a button. This callback just calls the _connectWallet method.
     if (!this.state.selectedAddress) {
       return (
-        <ConnectWallet 
-          connectWallet={() => this._connectWallet()} 
+        <ConnectWallet
+          connectWallet={() => this._connectWallet()}
           networkError={this.state.networkError}
           dismiss={() => this._dismissNetworkError()}
         />
@@ -84,7 +105,11 @@ export class Dapp extends React.Component {
 
     // If the token data or the user's balance hasn't loaded yet, we show
     // a loading component.
-    if (!this.state.tokenData || !this.state.balance) {
+    if (
+      !this.state.tokenData ||
+      !this.state.ethBalance ||
+      !this.state.hodlerData
+    ) {
       return <Loading />;
     }
 
@@ -93,15 +118,41 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>
-              {this.state.tokenData.name} ({this.state.tokenData.symbol})
-            </h1>
+            <h1>Welcome to the Hodler service!</h1>
+            <p float="center">
+              <img
+                src="https://user-images.githubusercontent.com/28585719/135728318-f0c39a20-7720-4948-b52e-8ef7c7011ad2.png"
+                height="200"
+              />
+              <img
+                src="https://user-images.githubusercontent.com/28585719/135728337-0f91cfd2-4ab0-4b2f-838d-6be9cee72d8d.png"
+                height="200"
+              />
+            </p>
+            <a href="https://github.com/Duayt/blockchain-developer-bootcamp-final-project">
+              Github of this project
+            </a>
+
             <p>
-              Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
-              <b>
-                {this.state.balance.toString()} {this.state.tokenData.symbol}
-              </b>
-              .
+              Welcome <b>{this.state.selectedAddress}</b>
+            </p>
+            {/* contract info */}
+            <p>
+              <b>Eth balance:</b> {formatEtherFixed(this.state.ethBalance, 3)}
+            </p>
+            <p>
+              <b>{this.state.tokenData.symbol}:</b>
+              {formatEtherFixed(this.state.tokenBalance, 2)}
+              <br />({this.state.tokenData.address})
+            </p>
+            <p>
+              <b>Hodler contract info:</b>
+              <br />
+              address: {this.state.hodlerData.address}
+              <br />
+              target token: {this.state.hodlerData.targetTokenAddress}
+              <br />
+              router address: {this.state.hodlerData.routerAddress}
             </p>
           </div>
         </div>
@@ -137,7 +188,7 @@ export class Dapp extends React.Component {
             {/*
               If the user has no tokens, we don't show the Tranfer form
             */}
-            {this.state.balance.eq(0) && (
+            {this.state.tokenBalance.eq(0) && (
               <NoTokensMessage selectedAddress={this.state.selectedAddress} />
             )}
 
@@ -147,8 +198,8 @@ export class Dapp extends React.Component {
               The component doesn't have logic, it just calls the transferTokens
               callback.
             */}
-            {this.state.balance.gt(0) && (
-              <Transfer
+            {this.state.tokenBalance.gt(0) && (
+              <Hodler
                 transferTokens={(to, amount) =>
                   this._transferTokens(to, amount)
                 }
@@ -190,14 +241,14 @@ export class Dapp extends React.Component {
       // `accountsChanged` event can be triggered with an undefined newAddress.
       // This happens when the user removes the Dapp from the "Connected
       // list of sites allowed access to your addresses" (Metamask > Settings > Connections)
-      // To avoid errors, we reset the dapp state 
+      // To avoid errors, we reset the dapp state
       if (newAddress === undefined) {
         return this._resetState();
       }
-      
+
       this._initialize(newAddress);
     });
-    
+
     // We reset the dapp state if the network is changed
     window.ethereum.on("networkChanged", ([networkId]) => {
       this._stopPollingData();
@@ -220,6 +271,7 @@ export class Dapp extends React.Component {
     // sample project, but you can reuse the same initialization pattern.
     this._intializeEthers();
     this._getTokenData();
+    this._getContractData();
     this._startPollingData();
   }
 
@@ -230,8 +282,14 @@ export class Dapp extends React.Component {
     // When, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
     this._token = new ethers.Contract(
-      contractAddress.Token,
+      contractAddress.MockToken,
       TokenArtifact.abi,
+      this._provider.getSigner(0)
+    );
+
+    this._contract = new ethers.Contract(
+      contractAddress.Hodler,
+      ContractArtifact.abi,
       this._provider.getSigner(0)
     );
   }
@@ -260,13 +318,32 @@ export class Dapp extends React.Component {
   async _getTokenData() {
     const name = await this._token.name();
     const symbol = await this._token.symbol();
+    const address = await this._token.address;
 
-    this.setState({ tokenData: { name, symbol } });
+    this.setState({ tokenData: { name, symbol, address } });
+  }
+
+  // Get hodler contract data
+  async _getContractData() {
+    const targetTokenAddress = await this._contract.targetToken();
+    const routerAddress = await this._contract.uniswapRouter();
+    const address = await this._contract.address;
+    this.setState({
+      hodlerData: { routerAddress, targetTokenAddress, address },
+    });
   }
 
   async _updateBalance() {
-    const balance = await this._token.balanceOf(this.state.selectedAddress);
-    this.setState({ balance });
+    const tokenBalance = await this._token.balanceOf(
+      this.state.selectedAddress
+    );
+    const ethBalance = await this._provider.getBalance(
+      this.state.selectedAddress
+    );
+    const hodlerInfo = await this._contract.hodlerInfo(
+      this.state.selectedAddress
+    );
+    this.setState({ tokenBalance, ethBalance, hodlerInfo });
   }
 
   // This method sends an ethereum transaction to transfer tokens.
@@ -354,16 +431,20 @@ export class Dapp extends React.Component {
     this.setState(this.initialState);
   }
 
-  // This method checks if Metamask selected network is Localhost:8545 
+  // This method checks if Metamask selected network is Localhost:8545
   _checkNetwork() {
     if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) {
       return true;
     }
-
-    this.setState({ 
-      networkError: 'Please connect Metamask to Localhost:8545'
-    });
-
+    if (HARDHAT_NETWORK_ID === "1337") {
+      this.setState({
+        networkError: "Please connect Metamask to Localhost:8545",
+      });
+    } else {
+      this.setState({
+        networkError: "Please connect Metamask to Kovan test net",
+      });
+    }
     return false;
   }
 }

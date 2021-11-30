@@ -7,8 +7,6 @@ const {
   UNISWAPV3_ROUTER,
   TOKENS,
 } = require("../helper-hardhat-config");
-const { cons } = require("fp-ts/lib/NonEmptyArray2v");
-
 task("dai", "fill deployer with some dai token")
   .addOptionalParam("size", "ETH size for dai", "0.001")
   .setAction(async (taskArgs, hre) => {
