@@ -5,28 +5,56 @@ import { ethers } from "ethers";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
-import TokenArtifact from "../contracts/Token.json";
-import contractAddress from "../contracts/contract-address.json";
+import TokenArtifact from "../contracts/MockToken.json";
+import ContractArtifact from "../contracts/Hodler.json";
 
+// import kovanContractAddress from "../contracts/kovan-addresses.json";
+// import localContractAddress from "../contracts/local-addresses.json";
 // All the logic of this dapp is contained in the Dapp component.
 // These other components are just presentational ones: they don't have any
 // logic. They just render HTML.
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { Transfer } from "./Transfer";
+// import { Transfer } from "./Transfer";
+import { Deposit } from "./Deposit";
+import { Withdraw } from "./Withdraw";
+import { Buy } from "./Buy";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
+import { SuccessTransactionMessage } from "./SuccessTransactionMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
-
+import { formatEther, parseEther } from "ethers/lib/utils";
 // This is the Hardhat Network id, you might change it in the hardhat.config.js
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
 // to use when deploying to other networks.
-const HARDHAT_NETWORK_ID = '31337';
+// const HARDHAT_NETWORK_ID = '31337';
 
+console.log("Chain id:", process.env.REACT_APP_CHAINID);
+const HARDHAT_NETWORK_ID = process.env.REACT_APP_CHAINID || "1337";
+
+let contractAddress;
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
+if (HARDHAT_NETWORK_ID === "1337") {
+  contractAddress = {
+    MockToken: "0xf09f34ade2d66ea69372c828454873bfa9c04556",
+    Hodler: "0x18dFdAa3cf69174b3EcE77D5e3Fd8872f4eB5d9C",
+  };
+} else {
+  // KOVAN TEST NET
+  contractAddress = {
+    MockToken: "0xf09f34ade2d66ea69372c828454873bfa9c04556",
+    Hodler: "0xFABB293906e837087367c26134ec5ebC505a37c1",
+  };
+}
+
+function formatEtherFixed(balance, decimals) {
+  let res = formatEther(balance);
+  res = (+res).toFixed(decimals);
+  return res;
+}
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
 //   2. Initializes ethers and the Token contract
@@ -48,11 +76,20 @@ export class Dapp extends React.Component {
       tokenData: undefined,
       // The user's address and balance
       selectedAddress: undefined,
-      balance: undefined,
+      tokenBalance: undefined,
+      ethBalance: undefined,
+
+      // The Hodler contract data
+      hodlerData: undefined,
+      hodlerInfo: undefined,
       // The ID about transactions being sent, and any possible error with them
       txBeingSent: undefined,
+      txSucceed: undefined,
+      txIsSuccess: undefined,
       transactionError: undefined,
       networkError: undefined,
+      timestamp: undefined,
+      isLocked: undefined,
     };
 
     this.state = this.initialState;
@@ -74,8 +111,8 @@ export class Dapp extends React.Component {
     // clicks a button. This callback just calls the _connectWallet method.
     if (!this.state.selectedAddress) {
       return (
-        <ConnectWallet 
-          connectWallet={() => this._connectWallet()} 
+        <ConnectWallet
+          connectWallet={() => this._connectWallet()}
           networkError={this.state.networkError}
           dismiss={() => this._dismissNetworkError()}
         />
@@ -84,7 +121,11 @@ export class Dapp extends React.Component {
 
     // If the token data or the user's balance hasn't loaded yet, we show
     // a loading component.
-    if (!this.state.tokenData || !this.state.balance) {
+    if (
+      !this.state.tokenData ||
+      !this.state.ethBalance ||
+      !this.state.hodlerData
+    ) {
       return <Loading />;
     }
 
@@ -93,15 +134,40 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>
-              {this.state.tokenData.name} ({this.state.tokenData.symbol})
-            </h1>
+            <h1>Welcome to the Hodler service!</h1>
+            <p float="center">
+              <img
+                src="https://user-images.githubusercontent.com/28585719/135728318-f0c39a20-7720-4948-b52e-8ef7c7011ad2.png"
+                height="200"
+                alt="Just hodl it"
+              />
+              <img
+                src="https://user-images.githubusercontent.com/28585719/135728337-0f91cfd2-4ab0-4b2f-838d-6be9cee72d8d.png"
+                height="200"
+                alt="CZ you wont be rich if you dont hodl"
+              />
+            </p>
+
+            <hr />
+            <h3>
+              Wallet info: <b>{this.state.selectedAddress}</b>
+            </h3>
             <p>
-              Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
-              <b>
-                {this.state.balance.toString()} {this.state.tokenData.symbol}
-              </b>
-              .
+              <b>Eth balance:</b> {formatEtherFixed(this.state.ethBalance, 3)}
+            </p>
+            <p>
+              <b>{this.state.tokenData.symbol}:</b>
+              {formatEtherFixed(this.state.tokenBalance, 2)}
+              <br />({this.state.tokenData.address})
+            </p>
+            <p>
+              <b>Hodler contract info:</b>
+              <br />
+              address: {this.state.hodlerData.address}
+              <br />
+              target token: {this.state.hodlerData.targetTokenAddress}
+              <br />
+              router address: {this.state.hodlerData.routerAddress}
             </p>
           </div>
         </div>
@@ -129,6 +195,12 @@ export class Dapp extends React.Component {
                 dismiss={() => this._dismissTransactionError()}
               />
             )}
+            {this.state.txIsSuccess && (
+              <SuccessTransactionMessage
+                message={"Success:" + this.state.txSucceed.transactionHash}
+                dismiss={() => this._dismissSuccessTransaction()}
+              />
+            )}
           </div>
         </div>
 
@@ -137,7 +209,7 @@ export class Dapp extends React.Component {
             {/*
               If the user has no tokens, we don't show the Tranfer form
             */}
-            {this.state.balance.eq(0) && (
+            {this.state.tokenBalance.eq(0) && (
               <NoTokensMessage selectedAddress={this.state.selectedAddress} />
             )}
 
@@ -147,13 +219,68 @@ export class Dapp extends React.Component {
               The component doesn't have logic, it just calls the transferTokens
               callback.
             */}
-            {this.state.balance.gt(0) && (
-              <Transfer
-                transferTokens={(to, amount) =>
-                  this._transferTokens(to, amount)
-                }
-                tokenSymbol={this.state.tokenData.symbol}
-              />
+            {this.state.tokenBalance.gt(0) && (
+              <div>
+                {/* showing info */}
+                <h4>Hodler Info</h4>
+                <p>
+                  Deposited balance:{" "}
+                  {formatEtherFixed(this.state.hodlerInfo.balance, 2)}
+                  <br />
+                  Target token balance:{" "}
+                  {formatEtherFixed(this.state.hodlerInfo.tokenBalance, 2)}
+                  <br />
+                  Last deposited:{" "}
+                  {this.state.hodlerInfo.lastDeposit.toString() === "0"
+                    ? "Have not deposited yet"
+                    : this.state.hodlerInfo.lastDeposit.toString()}
+                  <br />
+                  Wen Withdraw?:{" "}
+                  {this.state.hodlerInfo.nextUnlock.toString() === "0"
+                    ? "Have not deposited yet"
+                    : this.state.hodlerInfo.nextUnlock.toString()}
+                  <br />
+                  Now: {this.state.timestamp}
+                </p>
+
+                <hr></hr>
+                <div
+                  style={{ display: "flex", justifyContent: "space-evenly" }}
+                >
+                  <Deposit
+                    deposit={(to, locktime) => this._deposit(to, locktime)}
+                  />
+                  <Buy buy={(amount) => this._buy(amount)} />
+                  <div>
+                    <Withdraw
+                      buttonMessage={"Withdraw Eth"}
+                      withdraw={() => this._withdrawEth()}
+                      disabled={this.state.isLocked}
+                    />
+                    <br></br>
+                    <Withdraw
+                      buttonMessage={"Withdraw " + this.state.tokenData.symbol}
+                      withdraw={() => this._withdrawToken()}
+                      disabled={this.state.isLocked}
+                    />
+                  </div>
+                </div>
+                <hr></hr>
+                <p>
+                  This project is for
+                  blockchain-developer-bootcamp-final-project
+                  {"   "}
+                  <a href="https://github.com/Duayt/blockchain-developer-bootcamp-final-project">
+                    Github
+                  </a>
+                </p>
+                <span>
+                  Author:{" "}
+                  <a href="https://www.linkedin.com/in/tanawat-chiewhawan/">
+                    Tanawat Chiewhawan
+                  </a>
+                </span>
+              </div>
             )}
           </div>
         </div>
@@ -167,6 +294,10 @@ export class Dapp extends React.Component {
     this._stopPollingData();
   }
 
+  getDate = () => {
+    var timestamp = Math.round(new Date().getTime() / 1000);
+    this.setState({ timestamp });
+  };
   async _connectWallet() {
     // This method is run when the user clicks the Connect. It connects the
     // dapp to the user's wallet, and initializes it.
@@ -190,14 +321,14 @@ export class Dapp extends React.Component {
       // `accountsChanged` event can be triggered with an undefined newAddress.
       // This happens when the user removes the Dapp from the "Connected
       // list of sites allowed access to your addresses" (Metamask > Settings > Connections)
-      // To avoid errors, we reset the dapp state 
+      // To avoid errors, we reset the dapp state
       if (newAddress === undefined) {
         return this._resetState();
       }
-      
+
       this._initialize(newAddress);
     });
-    
+
     // We reset the dapp state if the network is changed
     window.ethereum.on("networkChanged", ([networkId]) => {
       this._stopPollingData();
@@ -220,6 +351,7 @@ export class Dapp extends React.Component {
     // sample project, but you can reuse the same initialization pattern.
     this._intializeEthers();
     this._getTokenData();
+    this._getContractData();
     this._startPollingData();
   }
 
@@ -230,8 +362,14 @@ export class Dapp extends React.Component {
     // When, we initialize the contract using that provider and the token's
     // artifact. You can do this same thing with your contracts.
     this._token = new ethers.Contract(
-      contractAddress.Token,
+      contractAddress.MockToken,
       TokenArtifact.abi,
+      this._provider.getSigner(0)
+    );
+
+    this._contract = new ethers.Contract(
+      contractAddress.Hodler,
+      ContractArtifact.abi,
       this._provider.getSigner(0)
     );
   }
@@ -260,13 +398,40 @@ export class Dapp extends React.Component {
   async _getTokenData() {
     const name = await this._token.name();
     const symbol = await this._token.symbol();
+    const address = await this._token.address;
 
-    this.setState({ tokenData: { name, symbol } });
+    this.setState({ tokenData: { name, symbol, address } });
+  }
+
+  // Get hodler contract data
+  async _getContractData() {
+    const targetTokenAddress = await this._contract.targetToken();
+    const routerAddress = await this._contract.uniswapRouter();
+    const address = await this._contract.address;
+    this.setState({
+      hodlerData: { routerAddress, targetTokenAddress, address },
+    });
   }
 
   async _updateBalance() {
-    const balance = await this._token.balanceOf(this.state.selectedAddress);
-    this.setState({ balance });
+    const tokenBalance = await this._token.balanceOf(
+      this.state.selectedAddress
+    );
+    const ethBalance = await this._provider.getBalance(
+      this.state.selectedAddress
+    );
+    const hodlerInfo = await this._contract.hodlerInfo(
+      this.state.selectedAddress
+    );
+
+    this.getDate();
+    // console.log(this.state.timestamp)
+    // console.log(hodlerInfo.nextUnlock.toNumber())
+    // console.log(await (await this._provider.getBlock(await this._provider.getBlockNumber())).timestamp)
+
+    const isLocked = this.state.timestamp < hodlerInfo.nextUnlock.toNumber();
+    // console.log(isLocked);
+    this.setState({ tokenBalance, ethBalance, hodlerInfo, isLocked });
   }
 
   // This method sends an ethereum transaction to transfer tokens.
@@ -294,8 +459,11 @@ export class Dapp extends React.Component {
 
       // We send the transaction, and save its hash in the Dapp's state. This
       // way we can indicate that we are waiting for it to be mined.
-      const tx = await this._token.transfer(to, amount);
-      this.setState({ txBeingSent: tx.hash });
+      const tx = await this._token.transfer(to, parseEther(amount.toString()));
+      this.setState({
+        txBeingSent: tx.hash,
+        txIsSuccess: undefined,
+      });
 
       // We use .wait() to wait for the transaction to be mined. This method
       // returns the transaction's receipt.
@@ -306,6 +474,8 @@ export class Dapp extends React.Component {
         // We can't know the exact error that made the transaction fail when it
         // was mined, so we throw this generic one.
         throw new Error("Transaction failed");
+      } else {
+        this.setState({ txIsSuccess: true, txSucceed: receipt });
       }
 
       // If we got here, the transaction was successful, so you may want to
@@ -321,10 +491,122 @@ export class Dapp extends React.Component {
       // Other errors are logged and stored in the Dapp's state. This is used to
       // show them to the user, and for debugging.
       console.error(error);
-      this.setState({ transactionError: error });
+      this.setState({ txIsSuccess: false, transactionError: error });
     } finally {
       // If we leave the try/catch, we aren't sending a tx anymore, so we clear
       // this part of the state.
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+
+  // Deposit
+  async _deposit(amount, locktime) {
+    try {
+      this._dismissTransactionError();
+
+      const tx = await this._contract.deposit(locktime, {
+        value: parseEther(amount.toString()),
+      });
+      this.setState({
+        txBeingSent: tx.hash,
+        txIsSuccess: undefined,
+      });
+      const receipt = await tx.wait();
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      } else {
+        this.setState({ txIsSuccess: true, txSucceed: receipt });
+      }
+      await this._updateBalance();
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+      console.error(error);
+      this.setState({ txIsSuccess: false, transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+  // Buy function
+  async _buy(amount) {
+    try {
+      this._dismissTransactionError();
+
+      const tx = await this._contract.buy(parseEther(amount.toString()));
+      this.setState({
+        txBeingSent: tx.hash,
+        txIsSuccess: undefined,
+      });
+      const receipt = await tx.wait();
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      } else {
+        this.setState({ txIsSuccess: true, txSucceed: receipt });
+      }
+      await this._updateBalance();
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+      console.error(error);
+      this.setState({ txIsSuccess: false, transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+  // WithdrawEth
+  async _withdrawEth() {
+    try {
+      this._dismissTransactionError();
+
+      const tx = await this._contract.withdraw();
+      this.setState({
+        txBeingSent: tx.hash,
+        txIsSuccess: undefined,
+      });
+      const receipt = await tx.wait();
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      } else {
+        this.setState({ txIsSuccess: true, txSucceed: receipt });
+      }
+      await this._updateBalance();
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+      console.error(error);
+      this.setState({ txIsSuccess: false, transactionError: error });
+    } finally {
+      this.setState({ txBeingSent: undefined });
+    }
+  }
+
+  // Withdrawtoken
+  async _withdrawToken() {
+    try {
+      this._dismissTransactionError();
+
+      const tx = await this._contract.withdrawToken();
+      this.setState({
+        txBeingSent: tx.hash,
+        txIsSuccess: undefined,
+      });
+      const receipt = await tx.wait();
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      } else {
+        this.setState({ txIsSuccess: true, txSucceed: receipt });
+      }
+      await this._updateBalance();
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
+      console.error(error);
+      this.setState({ txIsSuccess: false, transactionError: error });
+    } finally {
       this.setState({ txBeingSent: undefined });
     }
   }
@@ -334,6 +616,10 @@ export class Dapp extends React.Component {
     this.setState({ transactionError: undefined });
   }
 
+  // this method clear success tx
+  _dismissSuccessTransaction() {
+    this.setState({ txIsSuccess: undefined });
+  }
   // This method just clears part of the state.
   _dismissNetworkError() {
     this.setState({ networkError: undefined });
@@ -354,16 +640,20 @@ export class Dapp extends React.Component {
     this.setState(this.initialState);
   }
 
-  // This method checks if Metamask selected network is Localhost:8545 
+  // This method checks if Metamask selected network is Localhost:8545
   _checkNetwork() {
     if (window.ethereum.networkVersion === HARDHAT_NETWORK_ID) {
       return true;
     }
-
-    this.setState({ 
-      networkError: 'Please connect Metamask to Localhost:8545'
-    });
-
+    if (HARDHAT_NETWORK_ID === "1337") {
+      this.setState({
+        networkError: "Please connect Metamask to Localhost:8545",
+      });
+    } else {
+      this.setState({
+        networkError: "Please connect Metamask to Kovan test net",
+      });
+    }
     return false;
   }
 }

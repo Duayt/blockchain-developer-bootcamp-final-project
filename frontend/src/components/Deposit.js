@@ -1,6 +1,6 @@
 import React from "react";
 
-export function Transfer({ transferTokens, tokenSymbol }) {
+export function Deposit({ deposit }) {
   return (
     <div>
       <h3>Deposit</h3>
@@ -11,16 +11,16 @@ export function Transfer({ transferTokens, tokenSymbol }) {
           event.preventDefault();
 
           const formData = new FormData(event.target);
-          const to = formData.get("to");
           const amount = formData.get("amount");
+          const locktime = formData.get("locktime");
 
-          if (to && amount) {
-            transferTokens(to, amount);
+          if (amount && locktime) {
+            deposit(amount, locktime);
           }
         }}
       >
         <div className="form-group">
-          <label>Amount of {tokenSymbol}</label>
+          <label>Amount of Eth to deposit</label>
           <input
             className="form-control"
             type="number"
@@ -31,11 +31,18 @@ export function Transfer({ transferTokens, tokenSymbol }) {
           />
         </div>
         <div className="form-group">
-          <label>Recipient address</label>
-          <input className="form-control" type="text" name="to" required />
+          <label>Time lock in seconds</label>
+          <input
+            className="form-control"
+            type="number"
+            step="1"
+            name="locktime"
+            placeholder="1"
+            required
+          />
         </div>
         <div className="form-group">
-          <input className="btn btn-primary" type="submit" value="Transfer" />
+          <input className="btn btn-primary" type="submit" value="Deposit" />
         </div>
       </form>
     </div>

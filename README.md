@@ -12,25 +12,20 @@ Crypto market is volatile with high intensity of fear vs greed. I think it is ha
 
 # **Solution**
 A smart contract service to help discipline and force you to be a hodler!. the contract will be connected to an existing dex but with hodling oriented features:
-* Force user to buy only when the candle is red (buy the dip), and sell only major pump thredshold (green candle)
-* Time lock, cannnot sell or withdraw for certain period
+* User could deposit ETH but could not withdraw before a specific set of time
+* User could used the deposited eth to buy target token and it is also timelocked
+* In the future, this could be update to use price oracle to force user to buy at dip or sell at the pump
 
-## **More idea** 
-* Auto Dollar-Cost Averaging , keep buying weekly or monthly or at dip
-* Dead man switch or Beneficiary protocol, so your hodling stash could transfer ownership in longterm.
-* May be a customizable input for different tokens or scenario like, 1 year hodling etc.
-* Chaotic ape trading - Buy random token just for fun!
 
 # **Example workflow**
-1. User could deposit stable coin to a contract but might not able to withdraw out within a specific period
-2. The contract could may be call to check daily gains (red or green candles) [Update] move price check to frontend instead, criteria check within buy seem costly 
-3. Those stable coin could only be used to buy specific token from a DEX only in  a certain dip!
-4. Token position could not be sold to within certain period of time or if the green candle is not huge enough [Update] might force this on frontend instead
+1. User could deposit eth to a contract but might not able to withdraw out within a specific period using timelock feature.
+2. User could only use the deposit eth to buy a specific token only from UniswapV3 dex
+3. Both ETH, and specific token could only be withdrawn after specify timelockperiod
 
+Future: The contract could may be call to check daily gains (red or green candles)  move price check to frontend instead, criteria check within buy seem costly 
 
 # **Environment variables**
-API for archival node fork from https://moralis.io/
-
+API for archival node fork from [Moralis](https://moralis.io/)
 ```
 MORALIS_API=
 MNEMONIC=
@@ -38,18 +33,27 @@ MNEMONIC=
 # **How to run this project locally:**
 ## **Prerequisites**
 - Node.js >= v14
-- Hardhat
+- Hardhat (plugin: hardhat-deploy, hardhat-etherscan)
 - npm
 - `git checkout main`
 
-
-
+## **Mocking Environment**
+To test the Dex , i have deployed a mocked token on Kovan with step below
+- MockToken was deployed on kovan with `npx hardhat deploy --tags token --network kovan`
+- Token address `0xf09F34Ade2D66EA69372C828454873bFa9c04556`
+- Token was verified with command:`npx hardhat verify --network kovan 0xf09F34Ade2D66EA69372C828454873bFa9c04556`
+- Manually minted: 1,000,000 tokens
+- Pool created with 0.48 ETH: 1,000,000 tokens
+  - [Uniswap Web](https://app.uniswap.org/#/add/ETH/0xf09F34Ade2D66EA69372C828454873bFa9c04556/500)
+  - [Liqudiity Transaction](https://kovan.etherscan.io/tx/0xc29e5ad0c1f3475a358477853050e5ebd33b69fba370f75c1fc59df66f0121cc)
+  - [Pool Address](https://kovan.etherscan.io/address/0x0b3977134f3343565f569aa6d37bbb9e4680ae6f)
+  - Block: 28577077, forked block for local dev 28577078
 ## **Contract**
 - Run npm install in project root to install all dependency
 - Update moralis api in the .env with API key
-- Run testnet forking with `npx hardhat fork` 
+- Run testnet forking with `npx hardhat fork` (Forking the DEX with liquidity)
 - Run test with `npx hardhat test`
-- Run local deployment with `npx hardhat deploy --network localhost`
+- Run local deployment with `npx hardhat deploy --tags main --network localhost`
 - Development network id is 31337 change it in metamask
 
 ## **Frontend**
@@ -64,13 +68,22 @@ MNEMONIC=
 - [ ] DEX interface eg. UNISWAP, SUSHISWAP
   - [ ] Buy function
   - [ ] Sell function
-- [ ] Last candle price check may be an Oracle
 - [ ] Timelock
 - [ ] App
 
+## **More idea** 
+* Price reading data in the future.
+* Auto Dollar-Cost Averaging , keep buying weekly or monthly or at dip
+* Dead man switch or Beneficiary protocol, so your hodling stash could transfer ownership in longterm.
+* May be a customizable input for different tokens or scenario like, 1 year hodling etc.
+* Chaotic ape trading - Buy random token just for fun!
 
+# **Public Ethereum wallet for certification:
+`0x6D9469aD7BdFc6BFb0638b8DD31D4C814726Ed43`
 # **Resouces**
 
 * https://soliditydeveloper.com/uniswap3
-* https://kovan.etherscan.io/address/0xE592427A0AEce92De3Edee1F18E0157C05861564#writeProxyContract
-* 
+* https://docs.uniswap.org/protocol/guides/swaps/single-swaps
+* https://jamesbachini.com/uniswap-v3-trading-bot/
+* https://docs.uniswap.org/sdk/guides/creating-a-trade
+  

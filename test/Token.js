@@ -3,8 +3,7 @@
 const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
 
-
-describe("Token contract", function () {
+describe("Mock Token contract", function () {
   let Token;
   let token;
   let owner;
@@ -15,69 +14,66 @@ describe("Token contract", function () {
   beforeEach(async function () {
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
-    await deployments.fixture(['token'])
-    Token = await deployments.get("Token");
-    token = await ethers.getContractAt("Token", Token.address);
+    await deployments.fixture(["token"]);
+    Token = await deployments.get("MockToken");
+    token = await ethers.getContractAt("MockToken", Token.address);
   });
 
   describe("Deployment", function () {
-    it("Should set the right owner", async function () {
-      expect(await token.owner()).to.equal(owner.address);
+    it("Should able to mint some token", async function () {
+      const toMint = ethers.utils.parseEther("1");
+      await token.connect(owner).mint(owner.address, toMint);
+      expect(await token.totalSupply()).to.eq(toMint);
+      expect(await token.balanceOf(owner.address)).to.eq(toMint);
     });
 
-    it("Should assign the total supply of tokens to the owner", async function () {
-      const ownerBalance = await token.balanceOf(owner.address);
-      expect(await token.totalSupply()).to.equal(ownerBalance);
+    it("Should able to mint to other", async function () {
+      const toMint = ethers.utils.parseEther("1");
+      await token.connect(owner).mint(addr1.address, toMint);
+      expect(await token.balanceOf(addr1.address)).to.eq(toMint);
+    });
+
+    it("Should failed if not owner try to mint", async function () {
+      const toMint = ethers.utils.parseEther("1");
+      await expect(
+        token.connect(addr1).mint(addr1.address, toMint)
+      ).to.be.revertedWith("Only minter can mint");
     });
   });
 
   describe("Transactions", function () {
     it("Should transfer tokens between accounts", async function () {
-      // Transfer 50 tokens from owner to addr1
-      await token.transfer(addr1.address, 50);
-      const addr1Balance = await token.balanceOf(addr1.address);
-      expect(addr1Balance).to.equal(50);
+      const toMint = ethers.utils.parseEther("1");
 
-      // Transfer 50 tokens from addr1 to addr2
-      // We use .connect(signer) to send a transaction from another account
-      await token.connect(addr1).transfer(addr2.address, 50);
-      const addr2Balance = await token.balanceOf(addr2.address);
-      expect(addr2Balance).to.equal(50);
+      // mint 1 token to addr1
+      await token.connect(owner).mint(addr1.address, toMint);
+      expect(await token.balanceOf(addr1.address)).to.eq(toMint);
+
+      // addr1 transfer to addr2
+      const senderInstance = token.connect(addr1);
+      const toSend = ethers.utils.parseEther("0.4");
+      await senderInstance.transfer(addr2.address, toSend);
+
+      // Check balance
+      expect(await token.balanceOf(addr2.address)).to.eq(toSend);
+      expect(await token.balanceOf(addr1.address)).to.eq(toMint.sub(toSend));
     });
 
     it("Should fail if sender doesn’t have enough tokens", async function () {
-      const initialOwnerBalance = await token.balanceOf(owner.address);
+      const toMint = ethers.utils.parseEther("10");
 
-      // Try to send 1 token from addr1 (0 tokens) to owner (1000 tokens).
-      // `require` will evaluate false and revert the transaction.
+      // mint 10 token to addr1
+      await token.connect(owner).mint(addr1.address, toMint);
+      expect(await token.balanceOf(addr1.address)).to.eq(toMint);
+
+      // addr1 transfer to addr2 11
+      const senderInstance = token.connect(addr1);
+      const toSend = ethers.utils.parseEther("11");
+
+      // Notice await is on the expect
       await expect(
-        token.connect(addr1).transfer(owner.address, 1)
-      ).to.be.revertedWith("Not enough tokens");
-
-      // Owner balance shouldn't have changed.
-      expect(await token.balanceOf(owner.address)).to.equal(
-        initialOwnerBalance
-      );
-    });
-
-    it("Should update balances after transfers", async function () {
-      const initialOwnerBalance = await token.balanceOf(owner.address);
-
-      // Transfer 100 tokens from owner to addr1.
-      await token.transfer(addr1.address, 100);
-
-      // Transfer another 50 tokens from owner to addr2.
-      await token.transfer(addr2.address, 50);
-
-      // Check balances.
-      const finalOwnerBalance = await token.balanceOf(owner.address);
-      expect(finalOwnerBalance).to.equal(initialOwnerBalance - 150);
-
-      const addr1Balance = await token.balanceOf(addr1.address);
-      expect(addr1Balance).to.equal(100);
-
-      const addr2Balance = await token.balanceOf(addr2.address);
-      expect(addr2Balance).to.equal(50);
+        senderInstance.transfer(addr2.address, toSend)
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
     });
   });
 });
